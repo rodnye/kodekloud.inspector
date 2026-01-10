@@ -1,0 +1,210 @@
+# Setting up Event Generator App - KodeKloud Notes
+
+[Source URL](https://notes.kodekloud.com/docs/EFK-Stack-Enterprise-Grade-Logging-and-Monitoring/Deploying-E-Commerce-Application-on-K8s/Setting-up-Event-Generator-App)
+
+---
+
+## Table of Contents
+
+- Setting up Event Generator App
+  - Step 1: Verify Prerequisites
+  - Step 2: Clone the Repository
+  - Step 3: Explore the Repository Structure
+  - Step 4: Inspect the Pod Configuration
+  - Step 5: Deploy the Pod
+  - Step 6: Verify Log Generation
+  - Next Steps
+  - Watch Video
+
+---
+
+## Content
+
+EFK Stack: Enterprise-Grade Logging and Monitoring
+
+Deploying E Commerce Application on K8s
+
+# Setting up Event Generator App
+
+Welcome to this tutorial on deploying the Event Generator application on Kubernetes. In this guide, you'll learn how to verify your prerequisites, clone the repository, review configuration files, and deploy the pod that simulates application events. Before getting started, ensure you have access to your Kubernetes cluster and that both Elasticsearch and Kibana are installed. In our lab environment, these components are pre-installed.
+
+> [!important]
+> **Prerequisite Check**
+>
+> Make sure to run the following command to verify the running pods. If you do not see Elasticsearch and Kibana, check your namespace context.
+
+## Step 1: Verify Prerequisites
+
+Run the command below to list the running pods:
+
+```
+kubectl get pods
+NAME                             READY   STATUS    RESTARTS   AGE
+elasticsearch-0                  1/1     Running   0          6m42s
+kibana-5b7c7f664b4-6l5zg         1/1     Running   0          6m42s
+```
+
+If the expected pods are missing, you might be operating in the wrong namespace. Adjust your namespace context using this command (replace `efk` with the correct namespace if needed):
+
+```
+kubectl config set-context --current --namespace=efk
+```
+
+Then verify the pods again:
+
+```
+kubectl get pods
+NAME                             READY   STATUS    RESTARTS   AGE
+elasticsearch-0                  1/1     Running   0          7m40s
+kibana-5bfc7f664b-6lszg          1/1     Running   0          7m40s
+```
+
+## Step 2: Clone the Repository
+
+Clone the GitHub repository containing the configuration files needed for the Event Generator pod:
+
+```
+git clone https://github.com/kodekloudhub/efk-stack.git
+```
+
+You should see an output similar to:
+
+```
+Cloning into 'efk-stack'...
+remote: Enumerating objects: 116, done.
+remote: Counting objects: 100% (116/116), done.
+remote: Compressing objects: 100% (99/99), done.
+remote: Total 116 (delta 52), reused 54 (delta 11), pack-reused 0
+Receiving objects: 100% (116/116), 24.98 KiB | 6.24 MiB/s, done.
+Resolving deltas: 100% (52/52), done.
+```
+
+## Step 3: Explore the Repository Structure
+
+Navigate into the cloned repository and list the directories:
+
+```
+ls -lrt
+drwxr-xr-x 2 root root  4096 Jun 29 13:49 python-simple
+drwxr-xr-x 2 root root  4096 Jun 29 13:49 nginx
+drwxr-xr-x 2 root root  4096 Jun 29 13:49 k8-monitoring
+drwxr-xr-x 2 root root  4096 Jun 29 13:49 event-generator
+drwxr-xr-x 2 root root  4096 Jun 29 13:49 elasticsearch-kibana
+```
+
+Now, switch to the Event Generator folder:
+
+```
+cd efk-stack/event-generator/
+ls -lrt
+```
+
+This should display the following files:
+
+```
+total 24
+-rw-r--r-- 1 root 372 Jun 29 13:49 webapp-fluent-bit.yaml
+-rw-r--r-- 1 root 2245 Jun 29 13:49 fluent-bit.yaml
+-rw-r--r-- 1 root 112 Jun 29 13:49 fluent-bit-sa.yaml
+-rw-r--r-- 1 root 1400 Jun 29 13:49 fluent-bit-config.yaml
+-rw-r--r-- 1 root 181 Jun 29 13:49 fluent-bit-clusterrole.yaml
+-rw-r--r-- 1 root 260 Jun 29 13:49 fluent-bit-clusterrolebinding.yaml
+```
+
+## Step 4: Inspect the Pod Configuration
+
+Examine the pod configuration in the `webapp-fluent-bit.yaml` file. This file creates a pod named "app-event-simulator" that pulls the Docker image from the KodeKloud repository. The pod mounts a host directory (`/var/log/webapp`) to `/log` within the container so that the logs can be stored properly.
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-event-simulator
+  labels:
+    app: efk
+spec:
+  containers:
+    - name: app
+      image: kodekloud/event-simulator
+      volumeMounts:
+        - mountPath: /log
+          name: log-volume
+  # Volume to store the logs
+  volumes:
+    - name: log-volume
+      hostPath:
+        path: /var/log/webapp
+        type: DirectoryOrCreate
+```
+
+## Step 5: Deploy the Pod
+
+Apply the configuration to create the Event Simulator pod:
+
+```
+kubectl apply -f webapp-fluent-bit.yaml
+```
+
+Clear your screen and verify that the pod is running:
+
+```
+kubectl get pods
+NAME                          READY   STATUS    RESTARTS   AGE
+app-event-simulator           1/1     Running   0          38s
+elasticsearch-0               1/1     Running   0          10m
+kibana-5bcf7f66b4-6lszg       1/1     Running   0          10m
+```
+
+## Step 6: Verify Log Generation
+
+To check the logs generated by the event simulator pod, run:
+
+```
+kubectl logs app-event-simulator
+```
+
+The output should resemble the following sample logs:
+
+```
+2023-06-29 13:51:52,118 WARNING in event-simulator: USER7 Order failed as the item is OUT OF STOCK.
+2023-06-29 13:51:52,118 INFO in event-simulator: USER2 logged out
+2023-06-29 13:51:53,119 INFO in event-simulator: USER3 is viewing page1
+2023-06-29 13:51:54,120 WARNING in event-simulator: USER4 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
+2023-06-29 13:51:55,121 INFO in event-simulator: USER3 logged in
+2023-06-29 13:51:57,123 INFO in event-simulator: USER2 is viewing page1
+2023-06-29 13:51:58,124 INFO in event-simulator: USER2 is viewing page2
+2023-06-29 13:51:59,125 INFO in event-simulator: USER5 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
+2023-06-29 13:52:00,126 WARNING in event-simulator: USER1 is viewing page1
+2023-06-29 13:52:01,127 INFO in event-simulator: USER4 is viewing page1
+2023-06-29 13:52:03,130 INFO in event-simulator: USER4 is viewing page3
+2023-06-29 13:52:04,131 WARNING in event-simulator: USER1 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
+2023-06-29 13:52:05,132 INFO in event-simulator: USER2 is viewing page1
+2023-06-29 13:52:06,134 INFO in event-simulator: USER1 logged out
+2023-06-29 13:52:08,136 WARNING in event-simulator: USER7 Order failed as the item is OUT OF STOCK.
+2023-06-29 13:52:09,137 WARNING in event-simulator: USER5 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
+2023-06-29 13:52:10,138 INFO in event-simulator: USER2 is viewing page1
+2023-06-29 13:52:12,140 INFO in event-simulator: USER4 is viewing page1
+2023-06-29 13:52:13,141 INFO in event-simulator: USER1 logged out
+2023-06-29 13:52:14,143 WARNING in event-simulator: USER5 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
+2023-06-29 13:52:15,145 WARNING in event-simulator: USER6 Order failed as the item is OUT OF STOCK.
+2023-06-29 13:52:16,146 INFO in event-simulator: USER3 is viewing page3
+```
+
+The event simulator simulates an e-commerce application by generating various log types (INFO and WARNING) which indicate user activities like page views, login attempts, and order failures. These logs can be analyzed on a dashboard to gain insights into user behavior.
+
+## Next Steps
+
+With the Event Simulator application running, the next lesson will guide you through configuring Fluent Bit to collect these logs and forward them to Elasticsearch for analysis.
+
+For further information on Kubernetes deployment patterns and logging integrations, consider reviewing the following resources:
+
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
+- [Elasticsearch Documentation](https://www.elastic.co/guide/index.html)
+- [Fluent Bit Documentation](https://docs.fluentbit.io/)
+
+Happy logging!
+
+> [!important]
+> **## [Watch Video](https://learn.kodekloud.com/user/courses/efk-stack-enterprise-grade-logging-and-monitoring/module/b1b021b3-26c0-4701-aa90-d98fd3d8dc49/lesson/2bbd8ad9-31ed-45e3-bf42-bf67366d6fb2)**
+>
+> Watch video content
