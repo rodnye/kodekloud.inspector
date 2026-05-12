@@ -37,6 +37,7 @@ Available options:
 - `HEADLESS` - Run browser in headless mode
 - `PARALLEL_BATCHES` - Number of concurrent batches
 - `MAX_COURSES` - Limit number of courses to process (0 = no limit)
+- `FORCE_DOWNLOAD` - Force re-download even if markdown file already exists (default: false)
 - `EXECUTABLE_PATH` - Custom Chrome executable path
 
 ## Usage
