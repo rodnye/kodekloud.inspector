@@ -34,12 +34,6 @@ export const buildPageContentMarkdown = async (pageContent: PageContent): Promis
   sections.push(md.link('Source URL', pageContent.url));
   sections.push(md.horizontalRule());
 
-  // Navigation section (if included)
-  if (pageContent.navigation && pageContent.navigation.length > 0) {
-    sections.push(md.header('Navigation', 2));
-    sections.push(md.horizontalRule());
-  }
-
   // Headings structure
   if (pageContent.headings.length > 0) {
     sections.push(md.header('Table of Contents', 2));
