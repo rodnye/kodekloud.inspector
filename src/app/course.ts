@@ -3,7 +3,7 @@ import { config } from '../config';
 import { scrapePageContent } from '../crawler/content';
 import { NavigationItem } from '../types';
 import { buildPageContentMarkdown } from './content';
-import { writeFile } from 'fs/promises';
+import { writeFile, access } from 'fs/promises';
 import path from 'path';
 import { mkdirSync } from 'fs';
 import { crawlPageContentNavigation } from '../crawler/page-navigation';
@@ -34,13 +34,25 @@ export const writeCourse = async (link: NavigationItem) => {
         try {
           if (item.href) {
             // is a page
+            const baseFileName = item.href.split('/').pop()!;
+            const enumeratedFileName = `${currentIndex}_${baseFileName}.md`;
+            const filePath = path.join(parentPath, enumeratedFileName);
+
+            // Check if file already exists
+            if (!config.forceDownload) {
+              try {
+                await access(filePath);
+                console.debug(`Skipping ${item.href} - already downloaded`);
+                continue;
+              } catch {
+                // File doesn't exist, proceed with download
+              }
+            }
+
             const pageContent = await scrapePageContent(urlJoin(config.baseUrl, item.href));
             const markdown = await buildPageContentMarkdown(pageContent);
 
-            const baseFileName = item.href.split('/').pop()!;
-            const enumeratedFileName = `${currentIndex}_${baseFileName}.md`;
-
-            await writeFile(path.join(parentPath, enumeratedFileName), markdown);
+            await writeFile(filePath, markdown);
           } else if (item.children) {
             // is a folder
             const reference = item.children[0].href!;
