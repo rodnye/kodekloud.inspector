@@ -3,11 +3,9 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=flat&logo=playwright&logoColor=white)
 
-A web scraping template project that extracts all docs from the KodeKloud website and saves them as structured markdown files.
+This tool scrapes course documentation from KodeKloud notes and converts HTML content into Markdown format. The generated Markdown files are organized in a structured directory hierarchy that mirrors the course navigation, making it easy to browse, search, and archive course materials offline.
 
 Target website: https://notes.kodekloud.com/
-
-> **Status**: This is a work-in-progress template
 
 ## 📚 Extracted Course Documentation
 
@@ -15,60 +13,47 @@ All courses have been successfully scraped and are available in the `/docs` dire
 
 **[View Scraped Course Documentation](https://github.com/rodnye/kodekloud.inspector/tree/output/markdown/docs)**
 
-## Quick Start
+> [!important]
+> Scraping all courses can take a significant amount of time due to the extensive number of courses available. The tool processes pages sequentially within parallel batches, and depending on your configuration and network speed, the complete run may take from several minutes to hours. Use the `MAX_COURSES` setting to limit the number of courses for testing or partial runs.
 
-### 1. Install Dependencies
+## Installation
 
 ```bash
 pnpm install
 pnpm exec playwright install
 ```
 
-### 2. Configure Environment
+## Configuration
 
-Create `.env` file in the root directory:
+Copy `.env.example` to `.env` and adjust the settings:
 
-```env
-BASE_URL=https://notes.kodekloud.com
-HEADLESS=true
-EXECUTABLE_PATH=
-```
-
-**To scrape a specific page**, add `TARGET_URL` to your `.env`:
-
-```env
-BASE_URL=https://notes.kodekloud.com
-HEADLESS=true
-EXECUTABLE_PATH=
-TARGET_URL=https://notes.kodekloud.com/docs/AWS-Solutions-Architect-Associate-Certification/Introduction/Course-Overview
-```
-
-**To include navigation in the output** (useful for extracting the sidebar navigation structure), add `INCLUDE_NAVIGATION=true`:
-
-```env
-BASE_URL=https://notes.kodekloud.com
-HEADLESS=true
-EXECUTABLE_PATH=
-TARGET_URL=https://notes.kodekloud.com/docs/AWS-Solutions-Architect-Associate-Certification/Introduction/Course-Overview
-INCLUDE_NAVIGATION=true
-```
-
-> **Note**: The navigation is extracted once and included in the markdown output. This is useful because the navigation structure is the same across different articles.
-
-### 3. Run the Scraper
-
-**Scrape a specific page:**
 ```bash
-# Set TARGET_URL in .env, then:
-pnpm scrape
+cp .env.example .env
 ```
 
-**Or scrape all links (default behavior when TARGET_URL is not set):**
+Available options:
+
+- `BASE_URL` - Target website URL
+- `HEADLESS` - Run browser in headless mode
+- `PARALLEL_BATCHES` - Number of concurrent batches
+- `MAX_COURSES` - Limit number of courses to process (0 = no limit)
+- `EXECUTABLE_PATH` - Custom Chrome executable path
+
+## Usage
+
+Run the scraper:
+
 ```bash
 pnpm scrape
 ```
 
-The output will be saved in the `output/` directory.
+Output is generated in the `output/` directory.
+
+## GitHub Actions
+
+Manual workflow dispatch available for publishing output to the `output/markdown` branch.
+
+---
 
 > [!warning]
 > This project is for **educational purposes only**. It demonstrates:
@@ -81,4 +66,4 @@ The output will be saved in the `output/` directory.
 
 ---
 
-_Educational template for learning web scraping and TypeScript development :)_
+_Educational template for web scraping and TypeScript development :)_
