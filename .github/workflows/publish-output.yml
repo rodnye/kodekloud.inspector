@@ -13,6 +13,11 @@ on:
         required: false
         default: '7'
         type: string
+      force_download:
+        description: 'Force re-download even if markdown file already exists'
+        required: false
+        default: 'false'
+        type: string
 
 jobs:
   publish-md-output:
@@ -25,6 +30,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Checkout output/markdown branch
+        uses: actions/checkout@v4
+        with:
+          ref: output/markdown
+          path: ./output
+          fetch-depth: 0
+        continue-on-error: true
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -44,6 +57,7 @@ jobs:
           echo "HEADLESS=true" >> .env
           echo "PARALLEL_BATCHES=${{ github.event.inputs.parallel_batches || '7' }}" >> .env
           echo "MAX_COURSES=${{ github.event.inputs.max_courses || '0' }}" >> .env
+          echo "FORCE_DOWNLOAD=${{ github.event.inputs.force_download || 'false' }}" >> .env
           mkdir -p ./output/.github
           cp ./.github/secret_scanning.yml ./output/.github
 
